@@ -15,3 +15,4 @@ langchainhub>=0.1.18,<0.2.0
 wikipedia>=1.4.0,<2.0.0
 tavily-python>=0.3.3,<0.4.0
 gradio
+mysql-connector-python

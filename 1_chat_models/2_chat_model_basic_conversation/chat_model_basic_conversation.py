@@ -25,5 +25,5 @@ def get_chat_response_for_ui(message, chat_history):
     return result.content
 
 if __name__ == "__main__":
-    print(f"Answer 1: {model.invoke([SystemMessage(content=SYSTEM_MESSAGE_CONTENT), HumanMessage(content='What is reinforcement learning?')]).content}")
-    print(f"Answer 2: {model.invoke([SystemMessage(content=SYSTEM_MESSAGE_CONTENT), HumanMessage(content='How do transformers work?')]).content}")
+    print(f"Answer 1: {model.invoke([SystemMessage(content=SYSTEM_MESSAGE_CONTENT), HumanMessage(content='What does GPT stand for?')]).content}")
+    print(f"Answer 2: {model.invoke([SystemMessage(content=SYSTEM_MESSAGE_CONTENT), HumanMessage(content='Explain deep learning in a single line')]).content}")

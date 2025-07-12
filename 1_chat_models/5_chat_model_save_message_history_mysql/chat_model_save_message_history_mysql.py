@@ -1,45 +1,60 @@
-# Example Source: https://python.langchain.com/v0.2/docs/integrations/memory/google_firestore/
-
+# chat_model_save_message_history_mysql.py - Concise version
+import os, sys, json
 from dotenv import load_dotenv
+import mysql.connector
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, BaseMessage
+
+# Setup path for SystemMessage.py
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from SystemMessage import SYSTEM_MESSAGE_CONTENT
 
 load_dotenv()
-
-# Initialize Chat Model
 model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
 
-def get_model_response_no_memory(messages_list: list):
-    """Invokes the Gemini model with a list of messages and returns the AI's content.
-    This function does NOT integrate with any persistent memory (MySQL/Firestore).
-    """
-    result = model.invoke(messages_list)
-    return result.content
+# Database Configuration
+DB_CONFIG = {
+    "host": os.getenv("MYSQL_HOST"),
+    "user": os.getenv("MYSQL_USER"),
+    "password": os.getenv("MYSQL_PASSWORD"),
+    "database": os.getenv("MYSQL_DATABASE")
+}
+print(f"DEBUG: DB_CONFIG loaded: {DB_CONFIG}") # Temporary debug print
 
-def get_chat_response_for_ui(message, chat_history):
-    # Note: This function does NOT integrate with the MySQL history saving from the original file.
-    # It provides a basic chat interface with the Gemini model.
-    messages: list[BaseMessage] = [SystemMessage(content=SYSTEM_MESSAGE_CONTENT)]
-    for item in chat_history:
-        if item["role"] == "user":
-            messages.append(HumanMessage(content=item["content"]))
-        elif item["role"] == "assistant":
-            messages.append(AIMessage(content=item["content"]))
-    messages.append(HumanMessage(content=message))
+def get_db_connection(): return mysql.connector.connect(**DB_CONFIG) # Establishes DB connection
 
-    response = get_model_response_no_memory(messages)
-    return response
+def save_message(session_id: str, role: str, content: str): # Saves message to DB
+    try:
+        with get_db_connection() as conn, conn.cursor() as cursor:
+            cursor.execute("INSERT INTO chat_history (session_id, role, content) VALUES (%s, %s, %s)", (session_id, role, content))
+            conn.commit()
+    except mysql.connector.Error as err: print(f"Error saving: {err}")
 
-if __name__ == "__main__":
-    # The original memory integration logic is removed for this example.
-    # This block demonstrates basic model invocation without memory.
-    print("This script now only demonstrates basic model invocation without memory.")
-    print("To use memory, you would need to integrate with a database like MySQL or Firestore.")
+def load_messages(session_id: str) -> list[BaseMessage]: # Loads messages from DB
+    messages: list[BaseMessage] = []
+    try:
+        with get_db_connection() as conn, conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT role, content FROM chat_history WHERE session_id = %s ORDER BY timestamp", (session_id,))
+            for row in cursor: messages.append(HumanMessage(content=row["content"]) if row["role"] == "user" else AIMessage(content=row["content"]))
+    except mysql.connector.Error as err: print(f"Error loading: {err}")
+    return messages
 
-    messages = [
-        SystemMessage(content=SYSTEM_MESSAGE_CONTENT),
-        HumanMessage(content="Hello, how are you?")
-    ]
-    response = get_model_response_no_memory(messages)
-    print(f"AI: {response}")
+def get_chat_response_for_ui(message, chat_history, session_id="default_session"): # Main chat function
+    full_messages: list[BaseMessage] = [SystemMessage(content=SYSTEM_MESSAGE_CONTENT)]
+    full_messages.extend(load_messages(session_id))
+    full_messages.append(HumanMessage(content=message))
+    bot_message = model.invoke(full_messages).content
+    save_message(session_id, "user", message)
+    save_message(session_id, "assistant", bot_message)
+    return bot_message
+
+if __name__ == "__main__": # Console test example
+    session_id = "console_test_session"
+    print(f"Chat for session: {session_id}. Type 'exit' to quit.")
+    for msg in load_messages(session_id): print(f"{os.linesep}You: {msg.content}" if isinstance(msg, HumanMessage) else f"{os.linesep}AI: {msg.content}")
+    while True:
+        query = input("You: ")
+        if query.lower() == "exit": break
+        response = get_chat_response_for_ui(query, [], session_id=session_id)
+        print(f"AI: {response}")
+    print("Chat ended. History saved.")
