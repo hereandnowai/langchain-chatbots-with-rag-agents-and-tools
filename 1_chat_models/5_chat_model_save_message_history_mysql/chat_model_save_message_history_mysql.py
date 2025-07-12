@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import mysql.connector
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, BaseMessage
+from typing import cast, Dict, Any
 
 # Setup path for SystemMessage.py
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -35,7 +36,9 @@ def load_messages(session_id: str) -> list[BaseMessage]: # Loads messages from D
     try:
         with get_db_connection() as conn, conn.cursor(dictionary=True) as cursor:
             cursor.execute("SELECT role, content FROM chat_history WHERE session_id = %s ORDER BY timestamp", (session_id,))
-            for row in cursor: messages.append(HumanMessage(content=row["content"]) if row["role"] == "user" else AIMessage(content=row["content"]))
+            for row_untyped in cursor.fetchall():
+                row = cast(Dict[str, Any], row_untyped)
+                messages.append(HumanMessage(content=cast(str, row["content"])) if row["role"] == "user" else AIMessage(content=cast(str, row["content"])))
     except mysql.connector.Error as err: print(f"Error loading: {err}")
     return messages
 
@@ -44,8 +47,8 @@ def get_chat_response_for_ui(message, chat_history, session_id="default_session"
     full_messages.extend(load_messages(session_id))
     full_messages.append(HumanMessage(content=message))
     bot_message = model.invoke(full_messages).content
-    save_message(session_id, "user", message)
-    save_message(session_id, "assistant", bot_message)
+    save_message(session_id, "user", cast(str, message))
+    save_message(session_id, "assistant", cast(str, bot_message))
     return bot_message
 
 if __name__ == "__main__": # Console test example
