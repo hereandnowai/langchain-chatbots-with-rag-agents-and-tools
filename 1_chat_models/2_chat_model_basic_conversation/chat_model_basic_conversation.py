@@ -1,44 +1,29 @@
-# Three types of messages to know:
-# 1. System Messages - broad context for the conversation.
-# 2. human messages
-# 3. ai messages
-
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, BaseMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
+import sys
+import os
 
-# Load environment variables from .env
+# Add the project root to sys.path to allow importing SystemMessage
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(project_root)
+
+from SystemMessage import SYSTEM_MESSAGE_CONTENT
+
 load_dotenv()
-
-# Create a ChatGoogleGenerativeAI model
-_model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
-
-def get_conversation_response(messages_list):
-    """Invokes the Gemini model with a list of messages and returns the AI's content."""
-    result = _model.invoke(messages_list)
-    return result.content
+model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
 
 def get_chat_response_for_ui(message, chat_history):
-    messages = []
-    messages.append(SystemMessage(content="You are a helpful AI assistant."))
-    for human, ai in chat_history:
-        messages.append(HumanMessage(content=human))
-        messages.append(AIMessage(content=ai))
+    messages: list[BaseMessage] = [SystemMessage(content=SYSTEM_MESSAGE_CONTENT)]
+    for item in chat_history:
+        if item["role"] == "user":
+            messages.append(HumanMessage(content=item["content"]))
+        elif item["role"] == "assistant":
+            messages.append(AIMessage(content=item["content"]))
     messages.append(HumanMessage(content=message))
-
-    bot_message = get_conversation_response(messages)
-    chat_history.append((message, bot_message))
-    return bot_message
+    result = model.invoke(messages)
+    return result.content
 
 if __name__ == "__main__":
-    messages = [
-        SystemMessage(content="Solve the following math problems"),
-        HumanMessage(content="What is 81 divided by 9?"),
-    ]
-    print(f"Answer from AI: {get_conversation_response(messages)}")
-
-    messages.extend([
-        AIMessage(content="81 divided by 9 is 9."),
-        HumanMessage(content="What is 10 times 5?"),
-    ])
-    print(f"Answer from AI: {get_conversation_response(messages)}")
+    print(f"Answer 1: {model.invoke([SystemMessage(content=SYSTEM_MESSAGE_CONTENT), HumanMessage(content='What is reinforcement learning?')]).content}")
+    print(f"Answer 2: {model.invoke([SystemMessage(content=SYSTEM_MESSAGE_CONTENT), HumanMessage(content='How do transformers work?')]).content}")
