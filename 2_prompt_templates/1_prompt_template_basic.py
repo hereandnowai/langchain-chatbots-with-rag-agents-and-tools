@@ -1,5 +1,5 @@
 # Prompt Template Docs:
-#   https://python.langchain.com/v0.2/docs/concepts/#prompt-templateshttps://python.langchain.com/v0.2/docs/concepts/#prompt-templates
+#   https://python.langchain.com/docs/concepts/
 
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage

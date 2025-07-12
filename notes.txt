@@ -1,0 +1,4 @@
+1. api from: gemini / openai / anthropic
+2. api: hereandnowai
+3. api: openrouter
+4. local ollama
