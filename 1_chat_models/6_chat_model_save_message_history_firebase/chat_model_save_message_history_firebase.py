@@ -3,7 +3,7 @@
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, BaseMessage
-from SystemMessage import SYSTEM_MESSAGE_CONTENT
+from sm import ai_teacher
 
 load_dotenv()
 
@@ -20,7 +20,7 @@ def get_model_response_no_memory(messages_list: list):
 def get_chat_response_for_ui(message, chat_history):
     # Note: This function does NOT integrate with the Firebase history saving from the original file.
     # It provides a basic chat interface with the Gemini model.
-    messages: list[BaseMessage] = [SystemMessage(content=SYSTEM_MESSAGE_CONTENT)]
+    messages: list[BaseMessage] = [SystemMessage(content=ai_teacher)]
     for item in chat_history:
         if item["role"] == "user":
             messages.append(HumanMessage(content=item["content"]))
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     print("To use memory, you would need to integrate with a database like Firebase/Firestore.")
 
     messages = [
-        SystemMessage(content=SYSTEM_MESSAGE_CONTENT),
+        SystemMessage(content=ai_teacher),
         HumanMessage(content="Hello, how are you?")
     ]
     response = get_model_response_no_memory(messages)

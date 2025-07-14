@@ -4,7 +4,7 @@ from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_community.chat_models import ChatOllama # For local/open-source models via Ollama
 from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
-from SystemMessage import SYSTEM_MESSAGE_CONTENT
+from sm import ai_teacher
 from typing import Optional
 
 # Setup environment variables
@@ -13,7 +13,7 @@ load_dotenv()
 # --- Helper function to create messages for models ---
 def create_messages(user_message: str) -> list[BaseMessage]:
     return [
-        SystemMessage(content=SYSTEM_MESSAGE_CONTENT),
+        SystemMessage(content=ai_teacher),
         HumanMessage(content=user_message),
     ]
 

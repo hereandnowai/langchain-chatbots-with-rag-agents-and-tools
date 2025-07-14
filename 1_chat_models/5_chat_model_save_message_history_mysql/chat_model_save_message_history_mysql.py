@@ -8,7 +8,7 @@ from typing import cast, Dict, Any
 
 # Setup path for SystemMessage.py
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from SystemMessage import SYSTEM_MESSAGE_CONTENT
+from sm import ai_teacher
 
 load_dotenv()
 model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
@@ -43,7 +43,7 @@ def load_messages(session_id: str) -> list[BaseMessage]: # Loads messages from D
     return messages
 
 def get_chat_response_for_ui(message, chat_history, session_id="default_session"): # Main chat function
-    full_messages: list[BaseMessage] = [SystemMessage(content=SYSTEM_MESSAGE_CONTENT)]
+    full_messages: list[BaseMessage] = [SystemMessage(content=ai_teacher)]
     full_messages.extend(load_messages(session_id))
     full_messages.append(HumanMessage(content=message))
     bot_message = model.invoke(full_messages).content

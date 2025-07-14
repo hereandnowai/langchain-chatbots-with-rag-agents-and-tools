@@ -8,13 +8,13 @@ import os
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.append(project_root)
 
-from SystemMessage import SYSTEM_MESSAGE_CONTENT
+from sm import ai_teacher
 
 load_dotenv()
 model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
 
 def get_chat_response_for_ui(message, chat_history):
-    messages: list[BaseMessage] = [SystemMessage(content=SYSTEM_MESSAGE_CONTENT)]
+    messages: list[BaseMessage] = [SystemMessage(content=ai_teacher)]
     for item in chat_history:
         if item["role"] == "user":
             messages.append(HumanMessage(content=item["content"]))
